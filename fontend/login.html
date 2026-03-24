@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lucra AI — Acesso Estratégico</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<style>
+:root {
+    --bg-main: #050505;
+    --bg-card: #0A0A0A;
+    --border-card: #1A1A1A;
+    --green-primary: #00FFA3;
+    --red-alert: #FF4D4D;
+    --white-soft: #F2F4F5;
+    --gray-text: #666;
+}
+* { box-sizing: border-box; font-family: 'Inter', sans-serif; }
+
+body {
+    background-color: var(--bg-main);
+    color: var(--white-soft);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    margin: 0;
+}
+
+.container {
+    background: var(--bg-card);
+    padding: 40px 30px;
+    width: 100%;
+    max-width: 400px;
+    border-radius: 16px;
+    border: 1px solid var(--border-card);
+}
+
+h1 {
+    text-align: center;
+    font-weight: 800;
+    font-size: 32px;
+}
+h1 span { color: var(--green-primary); }
+
+.subtitle {
+    text-align: center;
+    color: var(--gray-text);
+    margin-bottom: 30px;
+}
+
+.input-group { margin-bottom: 20px; }
+
+label {
+    font-size: 12px;
+    color: #AAA;
+    display: block;
+    margin-bottom: 8px;
+}
+
+input {
+    width: 100%;
+    padding: 14px;
+    border-radius: 10px;
+    border: 1px solid #222;
+    background: #111;
+    color: #FFF;
+}
+
+.btn-login {
+    width: 100%;
+    padding: 14px;
+    border-radius: 10px;
+    border: none;
+    background: var(--green-primary);
+    color: #000;
+    font-weight: 800;
+    cursor: pointer;
+    margin-bottom: 10px;
+}
+
+.btn-register {
+    width: 100%;
+    padding: 12px;
+    background: transparent;
+    color: #888;
+    border: 1px solid #222;
+    border-radius: 10px;
+    cursor: pointer;
+}
+
+.error-message {
+    background: rgba(255,77,77,0.1);
+    color: var(--red-alert);
+    padding: 10px;
+    border-radius: 8px;
+    display: none;
+    margin-bottom: 15px;
+    text-align: center;
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+    <h1>Lucra <span>AI</span></h1>
+    <p class="subtitle">Gestão Inteligente para Delivery</p>
+
+    <div id="error-box" class="error-message"></div>
+
+    <div class="input-group">
+        <label>Email</label>
+        <input type="email" id="email">
+    </div>
+
+    <div class="input-group">
+        <label>Senha</label>
+        <input type="password" id="password">
+    </div>
+
+    <button class="btn-login" id="btn-login">ACESSAR</button>
+    <button class="btn-register" id="btn-register">CRIAR CONTA</button>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+
+const sb = supabase.createClient(
+'https://xrwacdjyfimjrduyqrdy.supabase.co',
+'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inhyd2FjZGp5ZmltanJkdXlxcmR5Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3MTc4Nzk0MywiZXhwIjoyMDg3MzYzOTQzfQ.nDYT3hKW1Ymyrh1ToNMrxX9XRSRez8kPqhdDYLXJKrM'
+);
+
+const errorBox = document.getElementById('error-box');
+
+function erro(msg){
+    errorBox.innerText = msg;
+    errorBox.style.display = 'block';
+}
+
+
+// 🔐 LOGIN
+document.getElementById('btn-login').onclick = async () => {
+
+    const email = document.getElementById('email').value;
+    const password = document.getElementById('password').value;
+
+    const { data, error } = await sb.auth.signInWithPassword({
+        email,
+        password
+    });
+
+    if(error) return erro("Login inválido");
+
+    const user = data.user;
+
+    // 🔥 VERIFICA ASSINATURA
+    const { data: assinatura } = await sb
+        .from('assinaturas')
+        .select('*')
+        .eq('user_id', user.id)
+        .single();
+
+    if(!assinatura || assinatura.status !== 'aprovado'){
+        window.location.href = "bloqueado.html";
+        return;
+    }
+
+    window.location.href = "index.html";
+};
+
+
+// 🧠 CADASTRO
+document.getElementById('btn-register').onclick = async () => {
+
+    const email = document.getElementById('email').value;
+    const password = document.getElementById('password').value;
+
+    const { data, error } = await sb.auth.signUp({
+        email,
+        password
+    });
+
+    if (error) {
+        console.log(error);
+        return erro(error.message);
+    }
+
+    // 🔥 GARANTE QUE O USER EXISTE
+    if (!data.user) {
+        alert("Conta criada! Confirme seu email antes de continuar.");
+        return;
+    }
+
+    console.log("USER ID:", data.user.id);
+
+    // 🔥 INSERT BLINDADO
+    const { error: insertError } = await sb
+        .from('assinaturas')
+        .insert([
+            {
+                user_id: data.user.id,
+                status: 'pendente'
+            }
+        ]);
+
+    if (insertError) {
+        console.log("ERRO INSERT:", insertError);
+        alert("Conta criada, mas erro ao criar assinatura.");
+        return;
+    }
+
+    alert("Conta criada com sucesso! Faça o pagamento.");
+};
+
+});
+</script>
+
+</body>
+</html>

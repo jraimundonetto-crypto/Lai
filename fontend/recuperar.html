@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lucra AI — Nova Senha</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        :root {
+            --bg-main: #050505;
+            --bg-card: #0A0A0A;
+            --border-card: #1A1A1A;
+            --green-primary: #00FFA3;
+            --white-soft: #F2F4F5;
+            --gray-text: #666;
+        }
+        * { box-sizing: border-box; font-family: 'Inter', sans-serif; }
+        body {
+            background-color: var(--bg-main);
+            color: var(--white-soft);
+            display: flex; justify-content: center; align-items: center;
+            height: 100vh; margin: 0; padding: 20px;
+        }
+        .container {
+            background: var(--bg-card);
+            padding: 40px 30px;
+            width: 100%; max-width: 400px;
+            border-radius: 16px; border: 1px solid var(--border-card);
+            text-align: center;
+        }
+        h1 { font-weight: 800; font-size: 24px; margin-bottom: 10px; }
+        p { color: var(--gray-text); font-size: 14px; margin-bottom: 30px; }
+        .input-group { margin-bottom: 20px; text-align: left; }
+        label { font-size: 12px; color: #AAA; display: block; margin-bottom: 8px; text-transform: uppercase; }
+        input {
+            width: 100%; padding: 16px; border-radius: 12px;
+            border: 1px solid #222; background: #111; color: #FFF;
+        }
+        .btn-acao {
+            width: 100%; padding: 16px; border-radius: 12px; border: none;
+            background: var(--green-primary); color: #000;
+            font-weight: 800; font-size: 16px; cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>Nova Senha</h1>
+    <p>Digite sua nova senha de acesso abaixo.</p>
+
+    <div class="input-group">
+        <label>Nova Senha</label>
+        <input type="password" id="new-password" placeholder="Mínimo 6 caracteres">
+    </div>
+
+    <button class="btn-acao" id="btn-update">ATUALIZAR SENHA</button>
+</div>
+
+<script>
+    const SUPABASE_URL = 'https://xrwacdjyfimjrduyqrdy.supabase.co';
+    const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inhyd2FjZGp5ZmltanJkdXlxcmR5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE3ODc5NDMsImV4cCI6MjA4NzM2Mzk0M30.GOnaC2SZr4fXQ9-n8OoeOGsDI2meTwSwR8_QgzKBtfg'; 
+    const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+    document.getElementById('btn-update').onclick = async () => {
+        const password = document.getElementById('new-password').value;
+        
+        if(password.length < 6) return alert("A senha deve ter pelo menos 6 caracteres.");
+
+        const { error } = await sb.auth.updateUser({ password: password });
+        
+        if (error) alert("Erro ao atualizar: " + error.message);
+        else {
+            alert("Senha alterada com sucesso! Faça login agora.");
+            window.location.href = 'login.html';
+        }
+    };
+</script>
+</body>
+</html>

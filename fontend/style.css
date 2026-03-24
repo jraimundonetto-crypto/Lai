@@ -1,0 +1,197 @@
+:root {
+    --bg-main: #060708;       /* Preto profundo da Visão Geral */
+    --bg-card: #0A0A0A;       /* Fundo dos blocos */
+    --border-main: #1A1A1A;   /* Bordas finas e discretas */
+    --green-primary: #00FFA3; /* O verde neon da Visão Geral */
+    --text-main: #EEEEEE;
+    --text-muted: #666666;
+    --red-alert: #FF3131;
+}
+
+/* RESET E BASE */
+* { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', sans-serif; }
+
+body {
+    background: var(--bg-main);
+    color: var(--text-main);
+    display: flex;
+    height: 100vh;
+    overflow: hidden;
+}
+
+/* SIDEBAR PADRONIZADA */
+.sidebar {
+    width: 250px;
+    background: var(--bg-card);
+    border-right: 1px solid var(--border-main);
+    padding: 30px 20px;
+    display: flex;         /* Importante */
+    flex-direction: column; /* Importante */
+    height: 100vh;
+}
+
+/* O menu ocupa o espaço que sobrar, empurrando o logout para baixo */
+.menu { 
+    list-style: none; 
+    flex-grow: 1; /* Isso faz o menu "esticar" e empurrar o que vem depois */
+}
+
+.logout {
+    margin-top: auto; /* Garante que ele fique no final da sidebar */
+    padding: 15px;
+    color: var(--text-muted);
+    font-size: 14px;
+    cursor: pointer;
+    border-top: 1px solid var(--border-main);
+    transition: 0.2s;
+}
+
+.logout:hover { color: var(--red-alert); }
+
+.logo {
+    font-size: 22px;
+    font-weight: 800;
+    margin-bottom: 40px;
+    color: #FFF;
+}
+
+.logo span { color: var(--green-primary); }
+
+.menu { list-style: none; flex: 1; }
+
+.menu li {
+    padding: 12px 15px;
+    color: var(--text-muted);
+    cursor: pointer;
+    border-radius: 6px;
+    transition: 0.2s;
+    font-size: 14px;
+    margin-bottom: 5px;
+}
+
+.menu li:hover, .menu li.active {
+    background: #111;
+    color: var(--green-primary);
+}
+
+.menu li.active { border-left: 3px solid var(--green-primary); }
+
+/* ÁREA PRINCIPAL */
+main { flex: 1; padding: 40px; overflow-y: auto; }
+
+.page { max-width: 1000px; margin: auto; }
+
+/* COMPONENTES DE LAYOUT (O "NAIPE" DA VISÃO GERAL) */
+.titulo {
+    font-size: 26px;
+    font-weight: 800;
+    border-left: 4px solid var(--green-primary);
+    padding-left: 15px;
+    margin-bottom: 30px;
+}
+
+.card {
+    background: var(--bg-card);
+    border: 1px solid var(--border-main);
+    border-radius: 8px;
+    padding: 25px;
+    margin-bottom: 20px;
+}
+
+/* GRIDS */
+.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+.grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px; }
+
+/* FORMULÁRIOS (DELICADOS) */
+.campo { display: flex; flex-direction: column; gap: 8px; margin-bottom: 15px; }
+
+.campo label {
+    font-size: 12px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    font-weight: 600;
+}
+
+input {
+    background: #121212;
+    border: 1px solid #1F1F1F;
+    padding: 12px;
+    border-radius: 6px;
+    color: #FFF;
+    width: 100%;
+    outline: none;
+    transition: 0.2s;
+}
+
+input:focus { border-color: var(--green-primary); }
+
+/* BOTÕES */
+.btn-salvar {
+    background: var(--green-primary);
+    color: #000;
+    border: none;
+    padding: 15px 25px;
+    border-radius: 6px;
+    font-weight: 700;
+    cursor: pointer;
+    width: 100%;
+    transition: 0.3s;
+}
+
+.btn-salvar:hover { filter: brightness(1.1); transform: translateY(-2px); }
+
+/* SCROLLBAR */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-thumb { background: #222; border-radius: 10px; }
+
+/* --- ESTILOS ESPECÍFICOS PARA O CAIXA & PROJEÇÕES --- */
+.grid-analise { 
+    display: grid; 
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); 
+    gap: 20px; 
+    margin-top: 20px;
+}
+
+.card-analise { 
+    background: var(--bg-card); 
+    border: 1px solid var(--border-main); 
+    padding: 25px; 
+    border-radius: 8px; 
+    position: relative;
+}
+
+/* Bordas Superiores Coloridas */
+.border-azul { border-top: 3px solid #00D1FF; }
+.border-vermelho { border-top: 3px solid var(--red-alert); }
+.border-verde { border-top: 3px solid var(--green-primary); }
+.border-amarelo { border-top: 3px solid #FFD700; }
+.border-roxo { border-top: 3px solid #BF40BF; }
+
+/* Labels de Status */
+.label-status { 
+    font-size: 10px; 
+    font-weight: 800; 
+    padding: 4px 10px; 
+    border-radius: 4px; 
+    text-transform: uppercase; 
+    display: inline-block;
+    margin-bottom: 15px;
+}
+.azul { background: rgba(0, 209, 255, 0.1); color: #00D1FF; }
+.vermelho { background: rgba(255, 49, 49, 0.1); color: var(--red-alert); }
+.verde { background: rgba(0, 255, 163, 0.1); color: var(--green-primary); }
+.amarelo { background: rgba(255, 215, 0, 0.1); color: #FFD700; }
+.roxo { background: rgba(191, 64, 191, 0.1); color: #BF40BF; }
+
+/* Tipografia Interna dos Cards */
+.produto-nome { font-size: 18px; color: #FFF; margin-bottom: 20px; font-weight: 600; }
+.metrica-grupo { display: flex; flex-direction: column; gap: 12px; border-top: 1px solid #1A1A1A; padding-top: 15px; }
+.metrica { display: flex; justify-content: space-between; align-items: center; }
+.m-label { font-size: 11px; color: var(--text-muted); font-weight: 600; }
+.m-valor { font-size: 15px; color: #FFF; font-weight: 500; }
+
+.footer-card { margin-top: 15px; }
+.lucro-label { font-size: 11px; color: var(--text-muted); display: block; margin-bottom: 5px; }
+.lucro-valor { font-size: 28px; font-weight: 800; }
+
+.vermelho-texto { color: var(--red-alert); }
