@@ -8,10 +8,7 @@ const cors = require("cors");
 require("dotenv").config();
 
 const { createClient } = require("@supabase/supabase-js");
-const { analisarCardapio } = require('./ia-servicos.js');
-const path = require('path')
-
-const iaServicos = require(path.join(__dirname, 'ia-servicos.js'))
+const { analisarCardapio } = require("./ia-servicos.js");
 
 
 
