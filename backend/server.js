@@ -10,12 +10,19 @@ require("dotenv").config();
 const { createClient } = require("@supabase/supabase-js");
 const { analisarCardapio } = require("./ia-servicos");
 
-
 const app = express();
 
 app.use(cors());
 app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ limit: "10mb", extended: true }));
+
+/* ================================
+   CONEXÃO SUPABASE
+================================ */
+const supabase = createClient(
+  process.env.SUPABASE_URL,
+  process.env.SUPABASE_KEY
+);
 
 /* ================================
    MIDDLEWARE DE PROTEÇÃO (BLOQUEIO REAL)
@@ -37,30 +44,26 @@ const verificarAssinatura = async (req, res, next) => {
 
         const status = assinatura?.status?.toLowerCase()?.trim();
 
+        // Verificação rigorosa de status
         if (error || !assinatura || status !== 'aprovado') {
-            console.log(`[BLOQUEIO] Usuário ${user_id} tentou acessar sem assinatura ativa.`);
+            console.log(`[BLOQUEIO] Usuário ${user_id} barrado. Status: ${status}`);
             return res.status(403).json({ 
-                erro: "Acesso negado. Assinatura inativa ou pendente.",
+                erro: "Acesso negado. Assinatura inativa.",
                 bloqueado: true 
             });
         }
 
         next(); // Se estiver aprovado, segue para a rota original
     } catch (err) {
-        return res.status(500).json({ erro: "Erro ao validar acesso" });
+        console.error("Erro no middleware:", err);
+        return res.status(500).json({ erro: "Erro interno de validação" });
     }
 };
 
 /* ================================
-   CONEXÃO SUPABASE
+   FUNÇÕES AUXILIARES
 ================================ */
-
-const supabase = createClient(
-  process.env.SUPABASE_URL,
-  process.env.SUPABASE_KEY
-);
 async function garantirPerfilEmpresarial(user_id) {
-
   const { data } = await supabase
     .from("perfis_empresariais")
     .select("id")
@@ -68,29 +71,20 @@ async function garantirPerfilEmpresarial(user_id) {
     .single();
 
   if (!data) {
-
     console.log("Criando perfil empresarial automaticamente...");
-
     const { error } = await supabase
       .from("perfis_empresariais")
-      .insert({
-        id: user_id,
-        user_id: user_id
-      });
-
-    if (error) {
-      console.error("ERRO AO CRIAR PERFIL:", error);
-    }
-
+      .insert({ id: user_id, user_id: user_id });
+    if (error) console.error("ERRO AO CRIAR PERFIL:", error);
   }
-
 }
 
 /* ================================
-   BUSCAR PRODUTOS
+   ROTAS DA API
 ================================ */
 
-app.post("/api/processar-cardapio", verificarAssinatura, async (req, res) => {
+// BUSCAR PRODUTOS (Voltou a ser GET para bater com o Frontend)
+app.get("/api/produtos/:user_id", verificarAssinatura, async (req, res) => {
   const user_id = req.params.user_id;
 
   try {
@@ -99,42 +93,24 @@ app.post("/api/processar-cardapio", verificarAssinatura, async (req, res) => {
       .select("*")
       .eq("user_id", user_id);
 
-    if (error) {
-      console.error("ERRO SUPABASE:", error);
-
-      return res.status(500).json({
-        erro: "Erro ao buscar produtos",
-      });
-    }
-
+    if (error) throw error;
     res.json(data);
   } catch (err) {
-    console.error("ERRO SERVIDOR:", err);
-
-    res.status(500).json({
-      erro: "Erro interno",
-    });
+    console.error("ERRO AO BUSCAR PRODUTOS:", err);
+    res.status(500).json({ erro: "Erro ao buscar produtos" });
   }
 });
 
-/* ================================
-   PROCESSAR CARDÁPIO
-================================ */
-
-app.post("/api/processar-cardapio", async (req, res) => {
+// PROCESSAR CARDÁPIO COM IA
+app.post("/api/processar-cardapio", verificarAssinatura, async (req, res) => {
   try {
     console.log("[API] Processando cardápio");
-
     const { imagem, user_id } = req.body;
     
-await garantirPerfilEmpresarial(user_id);
-await supabase
-.from("cardapio_produtos")
-.delete()
-.eq("user_id", user_id);
+    await garantirPerfilEmpresarial(user_id);
+    await supabase.from("cardapio_produtos").delete().eq("user_id", user_id);
 
     const produtos = await analisarCardapio(imagem);
-
     const produtosSalvos = [];
 
     for (const item of produtos) {
@@ -153,46 +129,35 @@ await supabase
           categoria: "NORMAL",
         });
 
-      if (error) {
-        console.error("ERRO AO SALVAR:", error);
-      } else {
-        console.log("SALVO:", item.nome);
+      if (!error) {
         produtosSalvos.push(item);
       }
     }
 
-    res.json({
-      status: "ok",
-      produtos: produtosSalvos,
-    });
+    res.json({ status: "ok", produtos: produtosSalvos });
   } catch (erro) {
     console.error("Erro IA:", erro);
-
-    res.status(500).json({
-      erro: "Erro ao processar cardápio",
-    });
+    res.status(500).json({ erro: "Erro ao processar cardápio" });
   }
 });
 
 /* ================================
-   HEALTH CHECK
+   HEALTH CHECK & OUTROS ROUTERS
 ================================ */
-
 app.get("/health", (req, res) => {
   res.status(200).send("LUCRA AI Backend Online");
 });
 
-/* ================================
-   START SERVER
-================================ */
 const distribuicaoLucro = require("./distribuicao-lucro");
 app.use("/api", distribuicaoLucro);
 
 const consultorRouter = require("./consultorController");
 app.use("/api", consultorRouter);
 
+/* ================================
+   START SERVER
+================================ */
 const PORT = process.env.PORT || 3000;
-
 app.listen(PORT, () => {
   console.log(`🚀 Lucra AI Backend rodando na porta ${PORT}`);
 });
