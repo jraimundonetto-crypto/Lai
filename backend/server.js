@@ -17,6 +17,39 @@ app.use(cors());
 app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ limit: "10mb", extended: true }));
 
+/* ================================
+   MIDDLEWARE DE PROTEÇÃO (BLOQUEIO REAL)
+================================ */
+const verificarAssinatura = async (req, res, next) => {
+    // Pega o ID tanto de parâmetros da URL quanto do corpo da requisição
+    const user_id = req.params.user_id || req.body.user_id;
+
+    if (!user_id) {
+        return res.status(400).json({ erro: "User ID não fornecido" });
+    }
+
+    try {
+        const { data: assinatura, error } = await supabase
+            .from('assinaturas')
+            .select('status')
+            .eq('user_id', user_id)
+            .single();
+
+        const status = assinatura?.status?.toLowerCase()?.trim();
+
+        if (error || !assinatura || status !== 'aprovado') {
+            console.log(`[BLOQUEIO] Usuário ${user_id} tentou acessar sem assinatura ativa.`);
+            return res.status(403).json({ 
+                erro: "Acesso negado. Assinatura inativa ou pendente.",
+                bloqueado: true 
+            });
+        }
+
+        next(); // Se estiver aprovado, segue para a rota original
+    } catch (err) {
+        return res.status(500).json({ erro: "Erro ao validar acesso" });
+    }
+};
 
 /* ================================
    CONEXÃO SUPABASE
@@ -57,7 +90,7 @@ async function garantirPerfilEmpresarial(user_id) {
    BUSCAR PRODUTOS
 ================================ */
 
-app.get("/api/produtos/:user_id", async (req, res) => {
+app.post("/api/processar-cardapio", verificarAssinatura, async (req, res) => {
   const user_id = req.params.user_id;
 
   try {
